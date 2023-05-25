@@ -19,7 +19,11 @@ export default async function ProcessSpec(specUrl, sortTags) {
       jsonParsedSpec = convertedSpec.openapi;
     }
   } catch (err) {
-    console.info('%c There was an issue while parsing the spec %o ', 'color:orangered', err); // eslint-disable-line no-console
+    console.info(
+      '%c There was an issue while parsing the spec %o ',
+      'color:orangered',
+      err
+    ); // eslint-disable-line no-console
   }
 
   /*
@@ -48,13 +52,17 @@ export default async function ProcessSpec(specUrl, sortTags) {
     const commonPathProp = {
       summary: openApiSpec.paths[path].summary,
       description: openApiSpec.paths[path].description,
-      servers: openApiSpec.paths[path].servers ? openApiSpec.paths[path].servers : [],
-      parameters: openApiSpec.paths[path].parameters ? openApiSpec.paths[path].parameters : [],
+      servers: openApiSpec.paths[path].servers
+        ? openApiSpec.paths[path].servers
+        : [],
+      parameters: openApiSpec.paths[path].parameters
+        ? openApiSpec.paths[path].parameters
+        : [],
     };
 
     if (openApiSpec.tags) {
-      openApiSpec.tags.forEach(
-        (tag) => tags.push({ name: tag.name, description: tag.description, paths: [] }),
+      openApiSpec.tags.forEach((tag) =>
+        tags.push({ name: tag.name, description: tag.description, paths: [] })
       );
     }
 
@@ -69,12 +77,12 @@ export default async function ProcessSpec(specUrl, sortTags) {
         if (fullPath.tags) {
           tagText = fullPath.tags[0];
           if (openApiSpec.tags) {
-            tagDescr = openApiSpec.tags.find((v) => (v.name === tagText));
+            tagDescr = openApiSpec.tags.find((v) => v.name === tagText);
           }
         } else {
           let firstWordEndIndex = path.indexOf('/', 1);
           if (firstWordEndIndex === -1) {
-            firstWordEndIndex = (path.length - 1);
+            firstWordEndIndex = path.length - 1;
           } else {
             firstWordEndIndex -= 1;
           }
@@ -117,16 +125,26 @@ export default async function ProcessSpec(specUrl, sortTags) {
         let finalParameters = [];
         if (commonParams) {
           if (fullPath.parameters) {
-            finalParameters = commonParams.filter((commonParam) => {
-              if (!fullPath.parameters.some((param) => (commonParam.name === param.name && commonParam.in === param.in))) {
-                return commonParam;
-              }
-            }).concat(fullPath.parameters);
+            finalParameters = commonParams
+              .filter((commonParam) => {
+                if (
+                  !fullPath.parameters.some(
+                    (param) =>
+                      commonParam.name === param.name &&
+                      commonParam.in === param.in
+                  )
+                ) {
+                  return commonParam;
+                }
+              })
+              .concat(fullPath.parameters);
           } else {
             finalParameters = commonParams.slice(0);
           }
         } else {
-          finalParameters = fullPath.parameters ? fullPath.parameters.slice(0) : [];
+          finalParameters = fullPath.parameters
+            ? fullPath.parameters.slice(0)
+            : [];
         }
 
         const pathObj = {
@@ -137,7 +155,9 @@ export default async function ProcessSpec(specUrl, sortTags) {
           operationId: fullPath.operationId,
           requestBody: fullPath.requestBody,
           parameters: finalParameters,
-          servers: fullPath.servers ? commonPathProp.servers.concat(fullPath.servers) : commonPathProp.servers,
+          servers: fullPath.servers
+            ? commonPathProp.servers.concat(fullPath.servers)
+            : commonPathProp.servers,
           responses: fullPath.responses,
           deprecated: fullPath.deprecated,
           security: fullPath.security,
@@ -162,9 +182,11 @@ export default async function ProcessSpec(specUrl, sortTags) {
 
   let securitySchemes = {};
 
-  securitySchemes = (openApiSpec.components ? openApiSpec.components.securitySchemes : {});
+  securitySchemes = openApiSpec.components
+    ? openApiSpec.components.securitySchemes
+    : {};
   if (sortTags) {
-    tags.sort((a, b) => (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)));
+    tags.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   }
   const parsedSpec = {
     info: openApiSpec.info,

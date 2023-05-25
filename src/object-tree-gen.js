@@ -7,19 +7,26 @@ export function getTypeInfo(schema) {
     type: schema.$ref
       ? '{recursive}'
       : schema.enum
-        ? 'enum'
-        : schema.format
-          ? schema.format
-          : schema.type,
+      ? 'enum'
+      : schema.format
+      ? schema.format
+      : schema.type,
     format: schema.format ? schema.format : '',
-    pattern: (schema.pattern && !schema.enum) ? schema.pattern : '',
+    pattern: schema.pattern && !schema.enum ? schema.pattern : '',
     readOrWriteOnly: schema.readOnly
       ? 'READ-ONLY'
       : schema.writeOnly
-        ? 'WRITE-ONLY'
-        : '',
+      ? 'WRITE-ONLY'
+      : '',
     deprecated: schema.deprecated ? 'DEPRECATED' : '',
-    default: schema.default === 0 ? '0' : schema.default === false ? 'false' : (schema.default ? schema.default : ''),
+    default:
+      schema.default === 0
+        ? '0'
+        : schema.default === false
+        ? 'false'
+        : schema.default
+        ? schema.default
+        : '',
     description: schema.description ? schema.description : '',
     allowedValues: '',
     constrain: '',
@@ -45,7 +52,12 @@ export function getTypeInfo(schema) {
   if (schema.type === 'array' || schema.items) {
     const arraySchema = schema.items;
     info.arrayType = `${schema.type} of ${arraySchema.type}`;
-    info.default = arraySchema.default === 0 ? '0 ' : (arraySchema.default ? arraySchema.default : '');
+    info.default =
+      arraySchema.default === 0
+        ? '0 '
+        : arraySchema.default
+        ? arraySchema.default
+        : '';
     if (arraySchema.enum) {
       let opt = '';
       arraySchema.enum.map((v) => {
@@ -55,11 +67,17 @@ export function getTypeInfo(schema) {
     }
   } else if (schema.type === 'integer' || schema.type === 'number') {
     if (schema.minimum !== undefined && schema.maximum !== undefined) {
-      info.constrain = `${schema.exclusiveMinimum ? '>' : 'between '}${schema.minimum} and ${schema.exclusiveMaximum ? '<' : ''} ${schema.maximum}`;
+      info.constrain = `${schema.exclusiveMinimum ? '>' : 'between '}${
+        schema.minimum
+      } and ${schema.exclusiveMaximum ? '<' : ''} ${schema.maximum}`;
     } else if (schema.minimum !== undefined && schema.maximum === undefined) {
-      info.constrain = `${schema.exclusiveMinimum ? '>' : '>='}${schema.minimum}`;
+      info.constrain = `${schema.exclusiveMinimum ? '>' : '>='}${
+        schema.minimum
+      }`;
     } else if (schema.minimum === undefined && schema.maximum !== undefined) {
-      info.constrain = `${schema.exclusiveMaximum ? '<' : '<='}${schema.maximum}`;
+      info.constrain = `${schema.exclusiveMaximum ? '<' : '<='}${
+        schema.maximum
+      }`;
     }
     if (schema.multipleOf !== undefined) {
       info.constrain = `multiple of ${schema.multipleOf}`;
@@ -67,9 +85,15 @@ export function getTypeInfo(schema) {
   } else if (schema.type === 'string') {
     if (schema.minLength !== undefined && schema.maxLength !== undefined) {
       info.constrain = `${schema.minLength} to ${schema.maxLength} chars`;
-    } else if (schema.minLength !== undefined && schema.maxLength === undefined) {
+    } else if (
+      schema.minLength !== undefined &&
+      schema.maxLength === undefined
+    ) {
       info.constrain = `min:${schema.minLength} chars`;
-    } else if (schema.minLength === undefined && schema.maxLength !== undefined) {
+    } else if (
+      schema.minLength === undefined &&
+      schema.maxLength !== undefined
+    ) {
       info.constrain = `max:${schema.maxLength} chars`;
     }
   }
@@ -82,14 +106,17 @@ function generatePropDescription(propDescrArray, localize) {
   // Set Read or Write only
   if (propDescrArray[1].trim()) {
     descrStack.push({
-      text: `${propDescrArray[1]}`, style: ['sub', 'b', 'darkGray'], margin: [0, 3, 0, 0],
+      text: `${propDescrArray[1]}`,
+      style: ['sub', 'b', 'darkGray'],
+      margin: [0, 3, 0, 0],
     });
   }
 
   // Set Constraints
   if (propDescrArray[2]) {
     descrStack.push({
-      text: `${propDescrArray[2]}`, style: ['small', 'mono', 'darkGray'],
+      text: `${propDescrArray[2]}`,
+      style: ['small', 'mono', 'darkGray'],
     });
   }
 
@@ -143,34 +170,54 @@ export function schemaInObjectNotation(schema, obj = {}, level = 0) {
   if (!schema) {
     return;
   }
-  if (schema.type === 'object' || schema.properties) { // If Object
+  if (schema.type === 'object' || schema.properties) {
+    // If Object
     obj['::description'] = schema.description ? schema.description : '';
     obj['::type'] = 'object';
     for (const key in schema.properties) {
       if (schema.required && schema.required.includes(key)) {
-        obj[`${key}*`] = schemaInObjectNotation(schema.properties[key], {}, (level + 1));
+        obj[`${key}*`] = schemaInObjectNotation(
+          schema.properties[key],
+          {},
+          level + 1
+        );
       } else {
-        obj[key] = schemaInObjectNotation(schema.properties[key], {}, (level + 1));
+        obj[key] = schemaInObjectNotation(
+          schema.properties[key],
+          {},
+          level + 1
+        );
       }
     }
-  } else if (schema.items) { // If Array
+  } else if (schema.items) {
+    // If Array
     obj['::description'] = schema.description ? schema.description : '';
     obj['::type'] = 'array';
-    obj['::props'] = schemaInObjectNotation(schema.items, {}, (level + 1));
+    obj['::props'] = schemaInObjectNotation(schema.items, {}, level + 1);
   } else if (schema.allOf) {
     const objWithAllProps = {};
-    if (schema.allOf.length === 1 && !schema.allOf[0].properties && !schema.allOf[0].items) {
+    if (
+      schema.allOf.length === 1 &&
+      !schema.allOf[0].properties &&
+      !schema.allOf[0].items
+    ) {
       // If allOf has single item and the type is not an object or array, then its a primitive
       const tempSchema = schema.allOf[0];
       return `${getTypeInfo(tempSchema).typeInfoText}`;
     }
     // If allOf is an array of multiple elements, then all the keys makes a single object
     schema.allOf.map((v) => {
-      if (v.type === 'object' || v.properties || v.allOf || v.anyOf || v.oneOf) {
-        const partialObj = schemaInObjectNotation(v, {}, (level + 1));
+      if (
+        v.type === 'object' ||
+        v.properties ||
+        v.allOf ||
+        v.anyOf ||
+        v.oneOf
+      ) {
+        const partialObj = schemaInObjectNotation(v, {}, level + 1);
         Object.assign(objWithAllProps, partialObj);
       } else if (v.type === 'array' || v.items) {
-        const partialObj = [schemaInObjectNotation(v, {}, (level + 1))];
+        const partialObj = [schemaInObjectNotation(v, {}, level + 1)];
         Object.assign(objWithAllProps, partialObj);
       } else if (v.type) {
         const prop = `prop${Object.keys(objWithAllProps).length}`;
@@ -187,19 +234,25 @@ export function schemaInObjectNotation(schema, obj = {}, level = 0) {
     const objWithAnyOfProps = {};
     const xxxOf = schema.anyOf ? 'anyOf' : 'oneOf';
     schema[xxxOf].map((v) => {
-      if (v.type === 'object' || v.properties || v.allOf || v.anyOf || v.oneOf) {
-        const partialObj = schemaInObjectNotation(v, {}, (level + 1));
+      if (
+        v.type === 'object' ||
+        v.properties ||
+        v.allOf ||
+        v.anyOf ||
+        v.oneOf
+      ) {
+        const partialObj = schemaInObjectNotation(v, {}, level + 1);
         objWithAnyOfProps[`OPTION:${i}`] = partialObj;
         i++;
       } else if (v.type === 'array' || v.items) {
-        const partialObj = [schemaInObjectNotation(v, {}, (level + 1))];
+        const partialObj = [schemaInObjectNotation(v, {}, level + 1)];
         Object.assign(objWithAnyOfProps, partialObj);
       } else {
         const prop = `prop${Object.keys(objWithAnyOfProps).length}`;
         objWithAnyOfProps[prop] = `${getTypeInfo(v).typeInfoText}`;
       }
     });
-    obj[(schema.anyOf ? 'ANY:OF' : 'ONE:OF')] = objWithAnyOfProps;
+    obj[schema.anyOf ? 'ANY:OF' : 'ONE:OF'] = objWithAnyOfProps;
   } else {
     const typeObj = getTypeInfo(schema);
     if (typeObj.typeInfoText) {
@@ -216,7 +269,12 @@ export function schemaInObjectNotation(schema, obj = {}, level = 0) {
  * @param {string} prevKeyDataType  - data-type of previous key, it is either 'primitive', 'object' or 'array', based on this appropriate braces are used
  * @param {string} prevKey  - name of the key from previous recursive call stack
  */
-export function objectToTree(obj, localize, prevKeyDataType = 'object', prevKey = '') {
+export function objectToTree(
+  obj,
+  localize,
+  prevKeyDataType = 'object',
+  prevKey = ''
+) {
   if (typeof obj !== 'object') {
     const propDescrArray = obj.split('~|~');
     if (prevKeyDataType === 'array') {
@@ -226,14 +284,22 @@ export function objectToTree(obj, localize, prevKeyDataType = 'object', prevKey 
 
     return [
       { text: prevKey, style: ['small', 'mono'], margin: 0 },
-      { text: (propDescrArray[0] ? propDescrArray[0] : ''), style: ['small', 'mono', 'lightGray'], margin: 0 },
+      {
+        text: propDescrArray[0] ? propDescrArray[0] : '',
+        style: ['small', 'mono', 'lightGray'],
+        margin: 0,
+      },
       { stack: descrStack, margin: 0 },
     ];
   }
 
   // Important - pdfMake needs one row with all the cells for colSpan to work properly
   const rows = [
-    [{ text: '', margin: 0 }, { text: '', margin: 0 }, { text: '', margin: 0 }],
+    [
+      { text: '', margin: 0 },
+      { text: '', margin: 0 },
+      { text: '', margin: 0 },
+    ],
   ];
 
   for (const key in obj) {
@@ -251,7 +317,11 @@ export function objectToTree(obj, localize, prevKeyDataType = 'object', prevKey 
             {
               margin: [10, 0, 0, 0],
               stack: [
-                { text: `${key.replace(':', ' ')}`, style: ['sub', 'blue', 'b'], margin: [0, 5, 0, 0] },
+                {
+                  text: `${key.replace(':', ' ')}`,
+                  style: ['sub', 'blue', 'b'],
+                  margin: [0, 5, 0, 0],
+                },
                 ...allOptions,
               ],
             },
@@ -262,7 +332,13 @@ export function objectToTree(obj, localize, prevKeyDataType = 'object', prevKey 
     if (typeof obj[key] === 'object' && obj[key]['::type']) {
       let objectDef;
       if (obj[key]['::type'] === 'array') {
-        objectDef = objectToTree(obj[key]['::props'], localize, obj[key]['::type'], key, 'array');
+        objectDef = objectToTree(
+          obj[key]['::props'],
+          localize,
+          obj[key]['::type'],
+          key,
+          'array'
+        );
       } else {
         objectDef = objectToTree(obj[key], localize, obj[key]['::type'], key);
       }
@@ -278,50 +354,69 @@ export function objectToTree(obj, localize, prevKeyDataType = 'object', prevKey 
     keyDef = {
       text: [
         { text: `${prevKey.replace(':', ' ')}`, style: ['sub', 'b', 'blue'] },
-        { text: `${prevKeyDataType === 'array' ? '[{' : '{'}`, style: ['small', 'mono'] },
+        {
+          text: `${prevKeyDataType === 'array' ? '[{' : '{'}`,
+          style: ['small', 'mono'],
+        },
       ],
     };
   } else {
     keyDef = {
       stack: [
-        { text: `${prevKey} ${prevKeyDataType === 'array' ? '[{' : '{'}`, style: ['small', 'mono'] },
+        {
+          text: `${prevKey} ${prevKeyDataType === 'array' ? '[{' : '{'}`,
+          style: ['small', 'mono'],
+        },
       ],
     };
 
     if (obj['::description'] || prevKeyDataType === 'array') {
-      keyDef.stack.push(
-        {
-          text: `${prevKeyDataType === 'array' ? 'Array of object: ' : ''} ${obj['::description'] ? obj['::description'] : ''}`,
-          style: ['sub', 'gray'],
-          margin: [0, 0, 0, 4],
-        },
-      );
+      keyDef.stack.push({
+        text: `${prevKeyDataType === 'array' ? 'Array of object: ' : ''} ${
+          obj['::description'] ? obj['::description'] : ''
+        }`,
+        style: ['sub', 'gray'],
+        margin: [0, 0, 0, 4],
+      });
     }
   }
 
-  return [{
-    colSpan: 3,
-    stack: [
-      keyDef,
-      {
-        margin: [10, 0, 0, 0],
-        layout: {
-          defaultBorder: false,
-          hLineWidth() { return 0; },
-          vLineWidth() { return 0; },
-          paddingTop() { return 0; },
-          paddingBottom() { return 0; },
+  return [
+    {
+      colSpan: 3,
+      stack: [
+        keyDef,
+        {
+          margin: [10, 0, 0, 0],
+          layout: {
+            defaultBorder: false,
+            hLineWidth() {
+              return 0;
+            },
+            vLineWidth() {
+              return 0;
+            },
+            paddingTop() {
+              return 0;
+            },
+            paddingBottom() {
+              return 0;
+            },
+          },
+          table: {
+            headerRows: 0,
+            widths: ['auto', 'auto', '*'],
+            dontBreakRows: false,
+            body: rows,
+          },
         },
-        table: {
-          headerRows: 0,
-          widths: ['auto', 'auto', '*'],
-          dontBreakRows: false,
-          body: rows,
+        {
+          text: `${prevKeyDataType === 'array' ? '}]' : '}'}`,
+          style: ['small', 'mono'],
         },
-      },
-      { text: `${prevKeyDataType === 'array' ? '}]' : '}'}`, style: ['small', 'mono'] },
-    ],
-  }];
+      ],
+    },
+  ];
 }
 
 /**
@@ -347,21 +442,35 @@ export function objectToTableTree(obj, localize, allRows = [], level = 0) {
       const objRow = [
         { text: key, style: ['small', 'b'], margin: [leftMargin, 0, 0, 0] },
         { text: objType, style: ['small', 'mono'], margin: 0 },
-        { text: obj[key]['::description'], margin: 0, style: ['small', 'chinese'] },
+        {
+          text: obj[key]['::description'],
+          margin: 0,
+          style: ['small', 'chinese'],
+        },
       ];
       allRows.push(objRow);
       if (obj[key]['::type'] === 'array') {
-        objectToTableTree(obj[key]['::props'], localize, allRows, (level + 1));
+        objectToTableTree(obj[key]['::props'], localize, allRows, level + 1);
       } else {
-        objectToTableTree(obj[key], localize, allRows, (level + 1));
+        objectToTableTree(obj[key], localize, allRows, level + 1);
       }
-    } else if (typeof obj[key] === 'string' && (key.startsWith('::') === false)) {
+    } else if (typeof obj[key] === 'string' && key.startsWith('::') === false) {
       const typeAndDescr = obj[key].split('~|~');
       const descrStack = generatePropDescription(typeAndDescr, localize);
       allRows.push([
         { text: key, style: ['small'], margin: [leftMargin, 0, 0, 0] },
-        { text: (typeAndDescr[0] ? typeAndDescr[0].replace('undefined', 'object') : ''), style: ['small', 'mono'], margin: 0 },
-        { stack: ((descrStack && descrStack.length) > 0 ? descrStack : [{ text: '' }]), margin: 0 },
+        {
+          text: typeAndDescr[0]
+            ? typeAndDescr[0].replace('undefined', 'object')
+            : '',
+          style: ['small', 'mono'],
+          margin: 0,
+        },
+        {
+          stack:
+            (descrStack && descrStack.length) > 0 ? descrStack : [{ text: '' }],
+          margin: 0,
+        },
       ]);
     }
   }

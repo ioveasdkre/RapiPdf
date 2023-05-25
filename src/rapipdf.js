@@ -60,187 +60,212 @@ tmpl.innerHTML = `
   </div>  
 `;
 
-export default customElements.define('rapi-pdf', class RapiPdf extends HTMLElement {
-  constructor() {
-    super(); // always call super() first in the constructor.
-    const shadowRoot = this.attachShadow({ mode: 'open' });
-    const elFromTemplate = tmpl.content.cloneNode(true);
-    this.inputEl = elFromTemplate.querySelector('.spec-input');
-    this.btnEl = elFromTemplate.querySelector('.btn-default');
+export default customElements.define(
+  'rapi-pdf',
+  class RapiPdf extends HTMLElement {
+    constructor() {
+      super(); // always call super() first in the constructor.
+      const shadowRoot = this.attachShadow({ mode: 'open' });
+      const elFromTemplate = tmpl.content.cloneNode(true);
+      this.inputEl = elFromTemplate.querySelector('.spec-input');
+      this.btnEl = elFromTemplate.querySelector('.btn-default');
 
-    // Initialize attributes if not defined
-    shadowRoot.appendChild(elFromTemplate);
-  }
+      // Initialize attributes if not defined
+      shadowRoot.appendChild(elFromTemplate);
+    }
 
-  static get properties() {
-    return {
-      localize: { type: Object },
-    };
-  }
+    static get properties() {
+      return {
+        localize: { type: Object },
+      };
+    }
 
-  connectedCallback() {
-    // Add Event Listeners
-    this.inputEl.addEventListener('change', (e) => this.onChangeInput(e));
-    this.inputEl.addEventListener('keyup', (e) => this.onKeyUp(e));
-    this.btnEl.addEventListener('click', () => this.generatePdf());
-    let localizeObj = {};
-    if (this.children[0]) {
-      const localizeStr = this.children[0].content.textContent;
-      try {
-        localizeObj = JSON.parse(localizeStr);
-      } catch (e) {
-        localizeObj = {};
+    connectedCallback() {
+      // Add Event Listeners
+      this.inputEl.addEventListener('change', (e) => this.onChangeInput(e));
+      this.inputEl.addEventListener('keyup', (e) => this.onKeyUp(e));
+      this.btnEl.addEventListener('click', () => this.generatePdf());
+      let localizeObj = {};
+      if (this.children[0]) {
+        const localizeStr = this.children[0].content.textContent;
+        try {
+          localizeObj = JSON.parse(localizeStr);
+        } catch (e) {
+          localizeObj = {};
+        }
+      }
+
+      this.localize = {
+        index: '目錄索引',
+        api: 'API',
+        apiList: 'API列表',
+        apiReference: 'API參考',
+        apiVersion: 'API版本',
+        contact: '聯絡方式',
+        name: '欄位名稱',
+        email: '電子郵件',
+        url: '網址',
+        termsOfService: '服務條款',
+        securityAndAuthentication: '安全性和驗證',
+        securitySchemes: '安全方案',
+        key: '認證方式',
+        type: '型別',
+        example: '範例',
+        description: '說明',
+        request: '請求',
+        requestBody: '請求主體',
+        response: '回應',
+        responseModel: '回應模型',
+        statusCode: '狀態碼',
+        deprecated: '已棄用',
+        allowed: '允許的',
+        default: '預設值',
+        readOnly: '唯讀',
+        writeOnly: '唯寫',
+        enumValues: '列舉值',
+        pattern: '模式',
+        parameters: '參數',
+        noRequestParameters: '無請求參數',
+        method: '方法',
+        ...localizeObj,
+      };
+    }
+
+    disconnectedCallback() {
+      // Remove Event Listeners
+      this.inputEl.removeEventListener('change', this.inputOnChange);
+      this.inputEl.removeEventListener('keyup', this.onKeyUp);
+      this.btnEl.removeEventListener('click', this.generatePdf);
+    }
+
+    static get observedAttributes() {
+      return [
+        'spec-url',
+        'button-bg',
+        'input-bg',
+        'button-color',
+        'input-color',
+        'button-label',
+        'hide-input',
+      ];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+      switch (name) {
+        case 'spec-url':
+          if (oldValue !== newValue) {
+            this.inputEl.value = newValue;
+            return true;
+          }
+          break;
+        case 'button-label':
+          if (oldValue !== newValue) {
+            this.btnEl.innerText = newValue;
+            return true;
+          }
+          break;
+        case 'hide-input':
+          if (oldValue !== newValue) {
+            if (newValue === 'true') {
+              this.inputEl.style.display = 'none';
+              this.btnEl.style.borderRadius = 'var(--border-radius)';
+            } else {
+              this.inputEl.style.display = 'block';
+              this.btnEl.style.borderRadius =
+                '0 var(--border-radius) var(--border-radius) 0';
+            }
+            return true;
+          }
+          break;
+        case 'button-bg':
+          this.btnEl.style.backgroundColor = newValue;
+          this.inputEl.style.borderColor = newValue;
+          return true;
+        case 'button-color':
+          this.btnEl.style.color = newValue;
+          return true;
+        case 'input-bg':
+          this.inputEl.style.backgroundColor = newValue;
+          return true;
+        case 'input-color':
+          this.inputEl.style.color = newValue;
+          return true;
+        default:
+          return true;
+      }
+      return true;
+    }
+
+    get specUrl() {
+      return this.getAttribute('spec-url');
+    }
+
+    set specUrl(newSpecUrl) {
+      this.setAttribute('spec-url', newSpecUrl);
+    }
+
+    onChangeInput(e) {
+      this.specUrl = e.target.value;
+    }
+
+    onKeyUp(e) {
+      if (e.keyCode === 13) {
+        // In case of input keyup - first change event will fire which will set the new specUrl URL
+        this.generatePdf();
       }
     }
 
-    this.localize = {
-      index: '目錄索引',
-      api: 'API',
-      apiList: 'API List',
-      apiReference: 'API Reference',
-      apiVersion: 'API Version',
-      contact: 'CONTACT',
-      name: '欄位名稱',
-      email: 'EMAIL',
-      url: 'URL',
-      termsOfService: 'Terms of service',
-      securityAndAuthentication: 'HTTP Header: Authentication',
-      securitySchemes: 'SECURITY SCHEMES',
-      key: '認證方式',
-      type: '型別',
-      example: 'EXAMPLE',
-      description: '說明',
-      request: 'REQUEST',
-      requestBody: 'REQUEST BODY',
-      response: 'RESPONSE',
-      responseModel: 'RESPONSE MODEL',
-      statusCode: 'STATUS CODE',
-      deprecated: 'DEPRECATED',
-      allowed: 'ALLOWED',
-      default: '預設值',
-      readOnly: 'READ ONLY',
-      writeOnly: 'WRITE ONLY',
-      enumValues: 'ENUM',
-      pattern: 'PATTERN',
-      parameters: 'Parameters',
-      noRequestParameters: 'No request parameters',
-      method: 'METHOD',
-      ...localizeObj,
-    };
-  }
+    generatePdf(jsonObj) {
+      const pdfSortTags = this.getAttribute('pdf-sort-tags') !== 'false';
+      const pdfPrimaryColor = this.getAttribute('pdf-primary-color');
+      const pdfAlternateColor = this.getAttribute('pdf-alternate-color');
+      const pdfTitle =
+        this.getAttribute('pdf-title') === null
+          ? 'API Reference'
+          : this.getAttribute('pdf-title');
+      const pdfCoverText = this.getAttribute('pdf-cover-text')
+        ? this.getAttribute('pdf-cover-text')
+        : '';
+      const pdfSecurityText = this.getAttribute('pdf-security-text')
+        ? this.getAttribute('pdf-security-text')
+        : '';
+      const pdfApiText = this.getAttribute('pdf-api-text')
+        ? this.getAttribute('pdf-api-text')
+        : '';
+      const pdfSchemaStyle =
+        this.getAttribute('pdf-schema-style') === 'table' ? 'table' : 'object';
+      const pdfFooterText = this.getAttribute('pdf-footer-text')
+        ? this.getAttribute('pdf-footer-text')
+        : '';
+      const includeInfo = this.getAttribute('include-info') !== 'false';
+      const includeToc = this.getAttribute('include-toc') !== 'false';
+      const includeSecurity = this.getAttribute('include-security') !== 'false';
+      const includeExample = this.getAttribute('include-example') === 'true';
+      const includeApiDetails =
+        this.getAttribute('include-api-details') !== 'false';
+      const includeApiList = this.getAttribute('include-api-list') === 'true';
 
-  disconnectedCallback() {
-    // Remove Event Listeners
-    this.inputEl.removeEventListener('change', this.inputOnChange);
-    this.inputEl.removeEventListener('keyup', this.onKeyUp);
-    this.btnEl.removeEventListener('click', this.generatePdf);
-  }
-
-  static get observedAttributes() {
-    return ['spec-url', 'button-bg', 'input-bg', 'button-color', 'input-color', 'button-label', 'hide-input'];
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    switch (name) {
-      case 'spec-url':
-        if (oldValue !== newValue) {
-          this.inputEl.value = newValue;
-          return true;
-        }
-        break;
-      case 'button-label':
-        if (oldValue !== newValue) {
-          this.btnEl.innerText = newValue;
-          return true;
-        }
-        break;
-      case 'hide-input':
-        if (oldValue !== newValue) {
-          if (newValue === 'true') {
-            this.inputEl.style.display = 'none';
-            this.btnEl.style.borderRadius = 'var(--border-radius)';
-          } else {
-            this.inputEl.style.display = 'block';
-            this.btnEl.style.borderRadius = '0 var(--border-radius) var(--border-radius) 0';
-          }
-          return true;
-        }
-        break;
-      case 'button-bg':
-        this.btnEl.style.backgroundColor = newValue;
-        this.inputEl.style.borderColor = newValue;
-        return true;
-      case 'button-color':
-        this.btnEl.style.color = newValue;
-        return true;
-      case 'input-bg':
-        this.inputEl.style.backgroundColor = newValue;
-        return true;
-      case 'input-color':
-        this.inputEl.style.color = newValue;
-        return true;
-      default:
-        return true;
-    }
-    return true;
-  }
-
-  get specUrl() {
-    return this.getAttribute('spec-url');
-  }
-
-  set specUrl(newSpecUrl) {
-    this.setAttribute('spec-url', newSpecUrl);
-  }
-
-  onChangeInput(e) {
-    this.specUrl = e.target.value;
-  }
-
-  onKeyUp(e) {
-    if (e.keyCode === 13) {
-      // In case of input keyup - first change event will fire which will set the new specUrl URL
-      this.generatePdf();
+      const localize = this.localize;
+      const options = {
+        pdfSortTags,
+        pdfPrimaryColor,
+        pdfAlternateColor,
+        pdfTitle,
+        pdfCoverText,
+        pdfSecurityText,
+        pdfApiText,
+        pdfSchemaStyle,
+        pdfFooterText,
+        includeInfo,
+        includeToc,
+        includeSecurity,
+        includeExample,
+        includeApiDetails,
+        includeApiList,
+        localize,
+      };
+      const spec = this.specUrl || jsonObj;
+      createPdf(spec, options);
     }
   }
-
-  generatePdf(jsonObj) {
-    const pdfSortTags = this.getAttribute('pdf-sort-tags') !== 'false';
-    const pdfPrimaryColor = this.getAttribute('pdf-primary-color');
-    const pdfAlternateColor = this.getAttribute('pdf-alternate-color');
-    const pdfTitle = this.getAttribute('pdf-title') === null ? 'API Reference' : this.getAttribute('pdf-title');
-    const pdfCoverText = this.getAttribute('pdf-cover-text') ? this.getAttribute('pdf-cover-text') : '';
-    const pdfSecurityText = this.getAttribute('pdf-security-text') ? this.getAttribute('pdf-security-text') : '';
-    const pdfApiText = this.getAttribute('pdf-api-text') ? this.getAttribute('pdf-api-text') : '';
-    const pdfSchemaStyle = this.getAttribute('pdf-schema-style') === 'table' ? 'table' : 'object';
-    const pdfFooterText = this.getAttribute('pdf-footer-text') ? this.getAttribute('pdf-footer-text') : '';
-    const includeInfo = this.getAttribute('include-info') !== 'false';
-    const includeToc = this.getAttribute('include-toc') !== 'false';
-    const includeSecurity = this.getAttribute('include-security') !== 'false';
-    const includeExample = this.getAttribute('include-example') === 'true';
-    const includeApiDetails = this.getAttribute('include-api-details') !== 'false';
-    const includeApiList = this.getAttribute('include-api-list') === 'true';
-
-    const localize = this.localize;
-    const options = {
-      pdfSortTags,
-      pdfPrimaryColor,
-      pdfAlternateColor,
-      pdfTitle,
-      pdfCoverText,
-      pdfSecurityText,
-      pdfApiText,
-      pdfSchemaStyle,
-      pdfFooterText,
-      includeInfo,
-      includeToc,
-      includeSecurity,
-      includeExample,
-      includeApiDetails,
-      includeApiList,
-      localize,
-    };
-    const spec = this.specUrl || jsonObj;
-    createPdf(spec, options);
-  }
-});
+);

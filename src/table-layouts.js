@@ -1,28 +1,32 @@
 /* eslint-disable no-unused-vars */
 export const rowLinesTableLayout = {
   hLineWidth(i, node) {
-    return (i === 1 || i === node.table.body.length) ? 1 : 0.5;
+    return i === 1 || i === node.table.body.length ? 1 : 0.5;
   },
   vLineWidth() {
     return 0;
   },
   hLineColor(i, node) {
-    return (i === 0 || i === 1 || i === node.table.body.length) ? '#777' : 'lightgray';
+    return i === 0 || i === 1 || i === node.table.body.length
+      ? '#777'
+      : 'lightgray';
   },
 };
 
 export const normalTableLayout = {
   hLineWidth(i, node) {
-    return (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0.5;
+    return i === 0 || i === 1 || i === node.table.body.length ? 1 : 0.5;
   },
   vLineWidth(i, node) {
-    return (i === 0 || i === node.table.body[0].length) ? 1 : 0.5;
+    return i === 0 || i === node.table.body[0].length ? 1 : 0.5;
   },
   hLineColor(i, node) {
-    return (i === 0 || i === 1 || i === node.table.body.length) ? '#777' : 'lightgray';
+    return i === 0 || i === 1 || i === node.table.body.length
+      ? '#777'
+      : 'lightgray';
   },
   vLineColor(i, node) {
-    return (i === 0 || i === node.table.body[0].length) ? '#777' : 'lightgray';
+    return i === 0 || i === node.table.body[0].length ? '#777' : 'lightgray';
   },
 };
 
@@ -31,20 +35,34 @@ export const indentGuideLayout = {
     return 0;
   },
   hLineColor(i, node) {
-    return (i === 0 || i === node.table.body.length) ? 'black' : 'lightgray';
+    return i === 0 || i === node.table.body.length ? 'black' : 'lightgray';
   },
   vLineWidth(i, node) {
-    return (i === 0 && node.table.body.length > 3) ? 1 : 0;
+    return i === 0 && node.table.body.length > 3 ? 1 : 0;
   },
-  vLineColor() { return '#F9EBEA'; },
-  paddingTop() { return 0; },
-  paddingBottom() { return 0; },
+  vLineColor() {
+    return '#F9EBEA';
+  },
+  paddingTop() {
+    return 0;
+  },
+  paddingBottom() {
+    return 0;
+  },
 };
 
 export const noBorderLayout = {
   defaultBorder: false,
-  hLineWidth() { return 0; },
-  vLineWidth() { return 0; },
-  paddingTop() { return 0; },
-  paddingBottom() { return 0; },
+  hLineWidth() {
+    return 0;
+  },
+  vLineWidth() {
+    return 0;
+  },
+  paddingTop() {
+    return 0;
+  },
+  paddingBottom() {
+    return 0;
+  },
 };

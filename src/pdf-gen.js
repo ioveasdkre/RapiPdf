@@ -4,7 +4,10 @@ import pdfFonts from '@/vfs_fonts';
 
 import ProcessSpec from '@/spec-parser';
 import {
-  getInfoDef, getSecurityDef, getApiDef, getApiListDef,
+  getInfoDef,
+  getSecurityDef,
+  getApiDef,
+  getApiListDef,
 } from '@/pdf-parts-gen';
 
 export default async function createPdf(specUrl, options) {
@@ -31,8 +34,12 @@ export default async function createPdf(specUrl, options) {
     tableMargin: { margin: [0, 5, 0, 15] },
     b: { bold: true },
     i: { italics: true },
-    primary: { color: (options.pdfPrimaryColor ? options.pdfPrimaryColor : '#b44646') },
-    alternate: { color: (options.pdfAlternateColor ? options.pdfAlternateColor : '#005b96') },
+    primary: {
+      color: options.pdfPrimaryColor ? options.pdfPrimaryColor : '#b44646',
+    },
+    alternate: {
+      color: options.pdfAlternateColor ? options.pdfAlternateColor : '#005b96',
+    },
     gray: { color: 'gray' },
     lightGray: { color: '#aaaaaa' },
     darkGray: { color: '#666666' },
@@ -41,7 +48,9 @@ export default async function createPdf(specUrl, options) {
     mono: { font: 'RobotoMono', fontSize: 10 },
     monoSub: { font: 'RobotoMono', fontSize: 8 },
     header: { color: '#005b96', fillColor: '#e5e4e2' },
-    chinese: { /* font: 'Kaiu' */ },
+    chinese: {
+      /* font: 'Kaiu' */
+    },
   };
 
   const allContent = [];
@@ -72,11 +81,22 @@ export default async function createPdf(specUrl, options) {
     allContent.push(securityDef);
   }
   if (options.includeApiDetails) {
-    apiDef = getApiDef(parsedSpec, '', options.pdfSchemaStyle, options.localize, options.includeExample, options.includeApiList);
+    apiDef = getApiDef(
+      parsedSpec,
+      '',
+      options.pdfSchemaStyle,
+      options.localize,
+      options.includeExample,
+      options.includeApiList
+    );
     allContent.push(apiDef);
   }
   if (options.includeApiList) {
-    apiListDef = getApiListDef(parsedSpec, options.localize.apiList, options.localize);
+    apiListDef = getApiListDef(
+      parsedSpec,
+      options.localize.apiList,
+      options.localize
+    );
     allContent.push(apiListDef);
   }
 
@@ -86,7 +106,10 @@ export default async function createPdf(specUrl, options) {
         margin: 10,
         columns: [
           { text: options.pdfFooterText, style: ['sub', 'gray', 'left'] },
-          { text: `${currentPage} of ${pageCount}`, style: ['sub', 'gray', 'right'] },
+          {
+            text: `${currentPage} of ${pageCount}`,
+            style: ['sub', 'gray', 'right'],
+          },
         ],
       };
     },
