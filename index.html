@@ -26,21 +26,7 @@
   <!--
   <rapi-pdf id='rapipdf' spec-url="./examples/specs/test.json" include-info="false" include-security="false" include-toc="false"> </rapi-pdf>
   -->
-  <rapi-pdf id='rapipdf' spec-url="./specs/petstore.json" pdf-schema-style="table"> </rapi-pdf>
-  <rapi-pdf id='rapipdf' spec-url="./specs/petstore.json" pdf-schema-style="object"> </rapi-pdf>
-  <rapi-pdf id='rapipdf' spec-url="./specs/bitbucket.json"> </rapi-pdf>
-  <rapi-pdf id='rapipdf' spec-url="./specs/data-types.yaml"> </rapi-pdf>
-  <rapi-pdf id='rapipdf' spec-url="./specs/data-types.yaml" include-example="true", button-label="WITH EXAMPLE"> </rapi-pdf>
-  <rapi-pdf id='rapipdf' spec-url="./specs/data-types.yaml" hide-input="true"> </rapi-pdf>
-  
-
-  <button onclick="changeSpec()">Change Spec</button>
-  <script type="text/javascript">
-    function changeSpec(){
-      let el = document.getElementById("rapipdf");
-      el.setAttribute('spec-url', 'set new attrib');
-    } 
-  </script>  
+  <rapi-pdf id='rapipdf' spec-url="./specs/swagger.json" pdf-schema-style="table"> </rapi-pdf>
 
 
 </body>
